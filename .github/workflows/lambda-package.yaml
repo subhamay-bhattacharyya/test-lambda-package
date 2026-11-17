@@ -1,0 +1,82 @@
+name: Lambda Package Build
+
+run-name: Lambda Package Build for equipment-sme-assistant by ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'lambda/test-lambda/**'
+      - .github/workflows/lambda-package.yaml
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FUNCTION_NAME: equipment-sme-assistant
+  FUNCTION_DIR: lambda/equipment-sme-assistant
+
+jobs:
+  package:
+    name: Build and Upload Lambda Package
+    runs-on: ubuntu-26.04
+    environment: ci
+    env:
+      LAMBDA_PACKAGE_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGE_S3_BUCKET_NAME }}
+      LAMBDA_PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Validate bucket configuration
+        run: |
+          if [ -z "${LAMBDA_PACKAGE_S3_BUCKET_NAME}" ]; then
+            echo "::error::LAMBDA_PACKAGE_S3_BUCKET_NAME is not set"
+            exit 1
+          fi
+          if [ -z "${LAMBDA_PYTHON_VERSION}" ]; then
+            echo "::error::PYTHON_VERSION organization variable is not set"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.LAMBDA_PYTHON_VERSION }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.OIDC_ROLE_NAME }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Create virtual environment and install requirements
+        run: |
+          set -euo pipefail
+          if [ -f "${FUNCTION_DIR}/requirements.txt" ]; then
+            python -m venv "${RUNNER_TEMP}/venv"
+            source "${RUNNER_TEMP}/venv/bin/activate"
+            python -m pip install --upgrade pip
+            pip install -r "${FUNCTION_DIR}/requirements.txt" --target "${RUNNER_TEMP}/package"
+          else
+            echo "No requirements.txt found in ${FUNCTION_DIR}; skipping pip install"
+            mkdir -p "${RUNNER_TEMP}/package"
+          fi
+
+      - name: Build Lambda package
+        run: |
+          set -euo pipefail
+          cp -R "${FUNCTION_DIR}/." "${RUNNER_TEMP}/package/"
+          rm -f "${RUNNER_TEMP}/package/requirements.txt"
+          cd "${RUNNER_TEMP}/package"
+          zip -r "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" . -x "*/__pycache__/*"
+          unzip -l "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" | tail -1
+
+      - name: Upload package to S3
+        run: |
+          set -euo pipefail
+          KEY="${FUNCTION_NAME}/${FUNCTION_NAME}-${GITHUB_SHA}.zip"
+          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}"
+          echo "### Lambda package uploaded" >> "$GITHUB_STEP_SUMMARY"
+          echo "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
