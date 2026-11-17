@@ -29,7 +29,7 @@ jobs:
     env:
       FUNCTION_NAME: ${{ inputs.function_name }}
       FUNCTION_DIR: lambda/${{ inputs.function_name }}
-      LAMBDA_PACKAGE_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGE_S3_BUCKET_NAME }}
+      LAMBDA_PACKAGE_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGES_BUCKET_NAME }}
       LAMBDA_PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
     steps:
       - name: Checkout repository
@@ -38,7 +38,7 @@ jobs:
       - name: Validate bucket configuration
         run: |
           if [ -z "${LAMBDA_PACKAGE_S3_BUCKET_NAME}" ]; then
-            echo "::error::LAMBDA_PACKAGE_S3_BUCKET_NAME is not set"
+            echo "::error::LAMBDA_PACKAGES_BUCKET_NAME is not set"
             exit 1
           fi
           if [ -z "${LAMBDA_PYTHON_VERSION}" ]; then
@@ -83,6 +83,6 @@ jobs:
         run: |
           set -euo pipefail
           KEY="${FUNCTION_NAME}/${FUNCTION_NAME}-${GITHUB_SHA}.zip"
-          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}"
+          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGES_BUCKET_NAME}/${KEY}"
           echo "### Lambda package uploaded" >> "$GITHUB_STEP_SUMMARY"
-          echo "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
+          echo "s3://${LAMBDA_PACKAGES_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
