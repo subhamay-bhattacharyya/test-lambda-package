@@ -83,6 +83,6 @@ jobs:
         run: |
           set -euo pipefail
           KEY="${FUNCTION_NAME}/${FUNCTION_NAME}-${GITHUB_SHA}.zip"
-          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGES_BUCKET_NAME}/${KEY}"
+          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}"
           echo "### Lambda package uploaded" >> "$GITHUB_STEP_SUMMARY"
-          echo "s3://${LAMBDA_PACKAGES_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
+          echo "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
