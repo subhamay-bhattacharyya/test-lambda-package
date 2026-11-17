@@ -1,21 +1,25 @@
 name: Lambda Package Build
 
-run-name: Lambda Package Build for equipment-sme-assistant by ${{ github.actor }}
+run-name: Lambda Package Build for ${{ inputs.function_name }} by ${{ github.actor }}
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'lambda/test-lambda/**'
-      - .github/workflows/lambda-package.yaml
+    inputs:
+      function_name:
+        description: Lambda function to package (must match a folder under lambda/)
+        type: choice
+        required: true
+        default: test-lambda
+        options:
+          - test-lambda
+  # push:
+  #   paths:
+  #     - 'lambda/test-lambda/**'
+  #     - .github/workflows/lambda-package.yaml
 
 permissions:
   contents: read
   id-token: write
-
-env:
-  FUNCTION_NAME: equipment-sme-assistant
-  FUNCTION_DIR: lambda/equipment-sme-assistant
 
 jobs:
   package:
@@ -23,6 +27,8 @@ jobs:
     runs-on: ubuntu-26.04
     environment: ci
     env:
+      FUNCTION_NAME: ${{ inputs.function_name }}
+      FUNCTION_DIR: lambda/${{ inputs.function_name }}
       LAMBDA_PACKAGE_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGE_S3_BUCKET_NAME }}
       LAMBDA_PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
     steps:
