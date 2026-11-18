@@ -9,6 +9,16 @@ on:
         type: string
         required: false
         default: test-lambda
+      environment:
+        description: "GitHub environment to deploy into"
+        required: true
+        type: choice
+        default: devl
+        options:
+          - ci
+          - devl
+          - test
+          - prod
 
 permissions:
   contents: read
@@ -18,6 +28,7 @@ jobs:
   config:
     name: Read repository variables
     runs-on: ubuntu-26.04
+    environment: ${{ inputs.environment }}
     outputs:
       function_name: ${{ steps.read.outputs.function_name }}
       s3_bucket_name: ${{ steps.read.outputs.s3_bucket_name }}
@@ -29,6 +40,7 @@ jobs:
     steps:
       - name: Debug input variables
         env:
+          TARGET_ENV: ${{ inputs.environment }}
           FUNCTION_BASE_NAME: ${{ inputs.function_base_name || 'test-lambda' }}
           AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -37,6 +49,7 @@ jobs:
           PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
           LAMBDA_PACKAGES_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
         run: |
+          echo "Target GitHub environment: ${TARGET_ENV}"
           echo "Repository variables as seen by this run:"
           for v in FUNCTION_BASE_NAME AWS_ENVIRONMENT AWS_REGION AWS_ACCOUNT_ID AWS_OIDC_ROLE_NAME PYTHON_VERSION LAMBDA_PACKAGES_S3_BUCKET_NAME; do
             printf '  %-30s = %s\n' "$v" "${!v:-<empty>}"
