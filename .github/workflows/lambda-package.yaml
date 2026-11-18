@@ -1,4 +1,4 @@
-name: Build and Deploy Lambda 
+name: Build and Deploy Lambda
 run-name: Deploy Lambda ${{ inputs.function_base_name || 'test-lambda' }} by ${{ github.actor }}
 
 on:
@@ -15,18 +15,79 @@ permissions:
   id-token: write
 
 jobs:
+  config:
+    name: Read repository variables
+    runs-on: ubuntu-26.04
+    outputs:
+      function_name: ${{ steps.read.outputs.function_name }}
+      s3_bucket_name: ${{ steps.read.outputs.s3_bucket_name }}
+      aws_region: ${{ steps.read.outputs.aws_region }}
+      aws_account_id: ${{ steps.read.outputs.aws_account_id }}
+      aws_oidc_role_name: ${{ steps.read.outputs.aws_oidc_role_name }}
+      python_version: ${{ steps.read.outputs.python_version }}
+      environment: ${{ steps.read.outputs.environment }}
+    steps:
+      - name: Debug input variables
+        env:
+          FUNCTION_BASE_NAME: ${{ inputs.function_base_name || 'test-lambda' }}
+          AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_OIDC_ROLE_NAME: ${{ vars.AWS_OIDC_ROLE_NAME }}
+          PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
+          LAMBDA_PACKAGES_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
+        run: |
+          echo "Repository variables as seen by this run:"
+          for v in FUNCTION_BASE_NAME AWS_ENVIRONMENT AWS_REGION AWS_ACCOUNT_ID AWS_OIDC_ROLE_NAME PYTHON_VERSION LAMBDA_PACKAGES_S3_BUCKET_NAME; do
+            printf '  %-30s = %s\n' "$v" "${!v:-<empty>}"
+          done
+
+      - name: Read and validate variables
+        id: read
+        env:
+          FUNCTION_BASE_NAME: ${{ inputs.function_base_name || 'test-lambda' }}
+          AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_OIDC_ROLE_NAME: ${{ vars.AWS_OIDC_ROLE_NAME }}
+          PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
+          LAMBDA_PACKAGES_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for v in AWS_ENVIRONMENT AWS_REGION AWS_ACCOUNT_ID AWS_OIDC_ROLE_NAME PYTHON_VERSION LAMBDA_PACKAGES_S3_BUCKET_NAME; do
+            if [ -z "${!v:-}" ]; then
+              missing+=("$v")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing repository variables: ${missing[*]}. Set them under Settings > Secrets and variables > Actions > Variables (the variable must be repository-level, or the job must declare the matching environment)."
+            exit 1
+          fi
+
+          {
+            echo "function_name=${FUNCTION_BASE_NAME}-${AWS_ENVIRONMENT}-${AWS_REGION}"
+            echo "s3_bucket_name=${LAMBDA_PACKAGES_S3_BUCKET_NAME}"
+            echo "aws_region=${AWS_REGION}"
+            echo "aws_account_id=${AWS_ACCOUNT_ID}"
+            echo "aws_oidc_role_name=${AWS_OIDC_ROLE_NAME}"
+            echo "python_version=${PYTHON_VERSION}"
+            echo "environment=${AWS_ENVIRONMENT}"
+          } >> "$GITHUB_OUTPUT"
+
   deploy:
     name: Build and deploy test-lambda
+    needs: config
     uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@feature/GHA-0002-initial-release-build-lam
     with:
-      function_name: ${{ inputs.function_base_name || 'test-lambda' }}-${{ vars.AWS_ENVIRONMENT }}-${{ vars.AWS_REGION }}
-      s3_bucket_name: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
-      aws_oidc_role_name: ${{ vars.AWS_OIDC_ROLE_NAME }}
-      python_version: ${{ vars.PYTHON_VERSION }}
+      function_name: ${{ needs.config.outputs.function_name }}
+      s3_bucket_name: ${{ needs.config.outputs.s3_bucket_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      aws_account_id: ${{ needs.config.outputs.aws_account_id }}
+      aws_oidc_role_name: ${{ needs.config.outputs.aws_oidc_role_name }}
+      python_version: ${{ needs.config.outputs.python_version }}
       functions_root: lambda
-      environment: ${{ vars.AWS_ENVIRONMENT }}
+      environment: ${{ needs.config.outputs.environment }}
       runner: ubuntu-26.04
 
   summary:
