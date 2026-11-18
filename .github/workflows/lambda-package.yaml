@@ -1,88 +1,38 @@
-name: Lambda Package Build
-
-run-name: Lambda Package Build for ${{ inputs.function_name }} by ${{ github.actor }}
+name: Build and Deploy Lambda 
+run-name: Deploy Lambda ${{ inputs.function_base_name || 'test-lambda' }} by ${{ github.actor }}
 
 on:
   workflow_dispatch:
     inputs:
-      function_name:
-        description: Lambda function to package (must match a folder under lambda/)
-        type: choice
-        required: true
+      function_base_name:
+        description: Lambda function base name. The deployed name is <base>-<AWS_ENVIRONMENT>-<AWS_REGION>.
+        type: string
+        required: false
         default: test-lambda
-        options:
-          - test-lambda
-  # push:
-  #   paths:
-  #     - 'lambda/test-lambda/**'
-  #     - .github/workflows/lambda-package.yaml
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  package:
-    name: Build and Upload Lambda Package
+  deploy:
+    name: Build and deploy test-lambda
+    uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@main
+    with:
+      function_name: ${{ inputs.function_base_name || 'test-lambda' }}-${{ vars.AWS_ENVIRONMENT }}-${{ vars.AWS_REGION }}
+      s3_bucket_name: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
+      aws_region: ${{ vars.AWS_REGION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+      aws_oidc_role_name: ${{ vars.AWS_OIDC_ROLE_NAME }}
+      python_version: ${{ vars.PYTHON_VERSION }}
+      functions_root: lambda
+      environment: ${{ vars.AWS_ENVIRONMENT }}
+      runner: ubuntu-26.04
+
+  summary:
+    name: Show deployed package
+    needs: deploy
     runs-on: ubuntu-26.04
-    environment: ci
-    env:
-      FUNCTION_NAME: ${{ inputs.function_name }}
-      FUNCTION_DIR: lambda/${{ inputs.function_name }}
-      LAMBDA_PACKAGE_S3_BUCKET_NAME: ${{ vars.LAMBDA_PACKAGES_BUCKET_NAME }}
-      LAMBDA_PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Validate bucket configuration
-        run: |
-          if [ -z "${LAMBDA_PACKAGE_S3_BUCKET_NAME}" ]; then
-            echo "::error::LAMBDA_PACKAGES_BUCKET_NAME is not set"
-            exit 1
-          fi
-          if [ -z "${LAMBDA_PYTHON_VERSION}" ]; then
-            echo "::error::PYTHON_VERSION organization variable is not set"
-            exit 1
-          fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.LAMBDA_PYTHON_VERSION }}
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.AWS_OIDC_ROLE_NAME }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Create virtual environment and install requirements
-        run: |
-          set -euo pipefail
-          if [ -f "${FUNCTION_DIR}/requirements.txt" ]; then
-            python -m venv "${RUNNER_TEMP}/venv"
-            source "${RUNNER_TEMP}/venv/bin/activate"
-            python -m pip install --upgrade pip
-            pip install -r "${FUNCTION_DIR}/requirements.txt" --target "${RUNNER_TEMP}/package"
-          else
-            echo "No requirements.txt found in ${FUNCTION_DIR}; skipping pip install"
-            mkdir -p "${RUNNER_TEMP}/package"
-          fi
-
-      - name: Build Lambda package
-        run: |
-          set -euo pipefail
-          cp -R "${FUNCTION_DIR}/." "${RUNNER_TEMP}/package/"
-          rm -f "${RUNNER_TEMP}/package/requirements.txt"
-          cd "${RUNNER_TEMP}/package"
-          zip -r "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" . -x "*/__pycache__/*"
-          unzip -l "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" | tail -1
-
-      - name: Upload package to S3
-        run: |
-          set -euo pipefail
-          KEY="${FUNCTION_NAME}/${FUNCTION_NAME}-${GITHUB_SHA}.zip"
-          aws s3 cp "${RUNNER_TEMP}/${FUNCTION_NAME}.zip" "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}"
-          echo "### Lambda package uploaded" >> "$GITHUB_STEP_SUMMARY"
-          echo "s3://${LAMBDA_PACKAGE_S3_BUCKET_NAME}/${KEY}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Print S3 URI
+        run: 'echo "Deployed package: ${{ needs.deploy.outputs.s3_uri }}"'
