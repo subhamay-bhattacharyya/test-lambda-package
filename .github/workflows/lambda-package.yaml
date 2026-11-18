@@ -17,7 +17,7 @@ permissions:
 jobs:
   deploy:
     name: Build and deploy test-lambda
-    uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@main
+    uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@feature/GHA-0002-initial-release-build-lam
     with:
       function_name: ${{ inputs.function_base_name || 'test-lambda' }}-${{ vars.AWS_ENVIRONMENT }}-${{ vars.AWS_REGION }}
       s3_bucket_name: ${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}
