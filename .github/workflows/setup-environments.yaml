@@ -13,6 +13,6 @@ permissions:
 jobs:
   setup:
     name: Setup AWS Environments
-    uses: subhamay-bhattacharyya-gha/setup-aws-environments-wf/.github/workflows/setup-environments.yaml@v1.5.0
+    uses: subhamay-bhattacharyya-gha/setup-aws-environments-wf/.github/workflows/setup-environments.yaml@v1.6.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
