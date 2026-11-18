@@ -93,7 +93,7 @@ jobs:
     needs: config
     uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@feature/GHA-0002-initial-release-build-lam
     with:
-      function_name: ${{ needs.config.outputs.function_name }}
+      function_base_name: ${{ inputs.function_base_name || 'test-lambda' }}
       s3_bucket_name: ${{ needs.config.outputs.s3_bucket_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       aws_account_id: ${{ needs.config.outputs.aws_account_id }}
