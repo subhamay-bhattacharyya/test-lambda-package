@@ -8,6 +8,7 @@ on:
       - main
       - feature/**
       - bug/**
+      - fix/**
     paths:
       - 'cloudformation/**'
       - 'lambda/image-labels-processor/**'
