@@ -1,19 +1,13 @@
 name: Build and Deploy Lambda
-run-name: Deploy Lambda ${{ inputs.function_base_name || 'test-lambda' }} by ${{ github.actor }}
+run-name: Deploy Lambda proj-ztc-image-labels-processor by ${{ github.actor }}
 
 on:
   workflow_dispatch:
     inputs:
-      function_base_name:
-        description: Lambda function base name. The deployed name is <base>-<AWS_ENVIRONMENT>-<AWS_REGION>.
-        type: string
-        required: false
-        default: proj-ztc-image-labels-processor
       environment:
-        description: "GitHub environment to deploy into"
+        description: "The environment to deploy into"
         required: true
         type: environment
-        default: devl
 
 permissions:
   contents: read
@@ -25,6 +19,7 @@ jobs:
     runs-on: ubuntu-26.04
     environment: ${{ inputs.environment }}
     outputs:
+      function_base_name: ${{ steps.read.outputs.function_base_name }}
       function_name: ${{ steps.read.outputs.function_name }}
       s3_bucket_name: ${{ steps.read.outputs.s3_bucket_name }}
       aws_region: ${{ steps.read.outputs.aws_region }}
@@ -35,11 +30,12 @@ jobs:
       - name: Read variables from environment
         id: read
         env:
-          FUNCTION_BASE_NAME: ${{ inputs.function_base_name || 'test-lambda' }}
+          FUNCTION_BASE_NAME: proj-ztc-image-labels-processor
           AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
           AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
           {
+            echo "function_base_name=${FUNCTION_BASE_NAME}"
             echo "function_name=${FUNCTION_BASE_NAME}-${AWS_ENVIRONMENT}-${AWS_REGION}"
             echo "s3_bucket_name=${{ vars.LAMBDA_PACKAGES_S3_BUCKET_NAME }}"
             echo "aws_region=${AWS_REGION}"
@@ -53,7 +49,7 @@ jobs:
     needs: config
     uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@main
     with:
-      function_base_name: ${{ inputs.function_base_name || 'test-lambda' }}
+      function_base_name: ${{ needs.config.outputs.function_base_name }}
       s3_bucket_name: ${{ needs.config.outputs.s3_bucket_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       aws_account_id: ${{ needs.config.outputs.aws_account_id }}
