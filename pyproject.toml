@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "test-lambda-function"
+version = "1.0.0"
+description = "Structured logging utilities for the test-lambda-function Lambda (Powertools for AWS Lambda)"
+requires-python = ">=3.12"
+dependencies = [
+    "aws-lambda-powertools>=3.41,<4",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["lambda/test-lambda"]
+include = ["structured_logging*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["lambda/test-lambda"]
