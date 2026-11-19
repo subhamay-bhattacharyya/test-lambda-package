@@ -8,7 +8,7 @@ on:
         description: Lambda function base name. The deployed name is <base>-<AWS_ENVIRONMENT>-<AWS_REGION>.
         type: string
         required: false
-        default: test-lambda
+        default: proj-ztc-image-labels-processor
       environment:
         description: "GitHub environment to deploy into"
         required: true
