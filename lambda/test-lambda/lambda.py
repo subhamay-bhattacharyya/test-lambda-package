@@ -6,12 +6,8 @@ Runtime:     Python 3.x (standard library only, no third-party dependencies)
 """
 
 import json
-import logging
-import os
 
-# Configure logging once per container. Lambda routes stdout/stderr to CloudWatch.
-logger = logging.getLogger()
-logger.setLevel(os.environ.get("LOG_LEVEL", "INFO").upper())
+from structured_logging import inject_lambda_context, logger
 
 
 def _response(status_code: int, body: dict) -> dict:
@@ -23,6 +19,7 @@ def _response(status_code: int, body: dict) -> dict:
     }
 
 
+@inject_lambda_context
 def handler(event, context):
     """
     Lambda entry point.
@@ -38,6 +35,7 @@ def handler(event, context):
 
     try:
         # ---- Your business logic goes here ----
+        logger.info("Repo synced", extra={"repo": "owner/name", "count": 3})
         result = {"message": "Hello from Lambda!", "request_id": context.aws_request_id}
         # ---------------------------------------
 
