@@ -14,6 +14,7 @@ on:
     branches: [main]
     paths:
       - 'cloudformation/**'
+      - 'lambda/image-labels-processor/**'
 
 permissions:
   actions: write
