@@ -62,7 +62,9 @@ def detect_labels(photo, bucket):
                 (left, top), width, height, linewidth=1, edgecolor="r", facecolor="none"
             )
             ax.add_patch(rect)
-            label_text = label["Name"] + " (" + str(round(label["Confidence"], 2)) + "%)"
+            label_text = (
+                label["Name"] + " (" + str(round(label["Confidence"], 2)) + "%)"
+            )
             plt.text(
                 left,
                 top - 2,
@@ -103,10 +105,12 @@ def handler(event, context):
                 logger.info("S3 object received", extra={"bucket": bucket, "key": key})
 
                 label_count = detect_labels(key, bucket)
-                logger.info("Labels detected", extra={"label_count": label_count, "key": key})
+                logger.info(
+                    "Labels detected", extra={"label_count": label_count, "key": key}
+                )
 
         # ---- Your business logic goes here ----
-        logger.info("Repo synced", extra={"repo": "owner/name", "count": 3})
+        logger.info("Updated Deploy Lambda", extra={"repo": "owner/name", "count": 3})
         result = {"message": "Hello from Lambda!", "request_id": context.aws_request_id}
         # ---------------------------------------
 

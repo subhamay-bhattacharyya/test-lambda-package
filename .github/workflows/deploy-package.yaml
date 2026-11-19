@@ -59,7 +59,7 @@ jobs:
       aws_account_id: ${{ needs.config.outputs.aws_account_id }}
       aws_oidc_role_name: ${{ needs.config.outputs.aws_oidc_role_name }}
       python_version: ${{ needs.config.outputs.python_version }}
-      functions_root: lambda
+      functions_root: lambda/image-labels-processor
       environment: ${{ inputs.environment }}
       runner: ubuntu-26.04
 
