@@ -56,7 +56,7 @@ jobs:
   deploy:
     name: Build and deploy test-lambda
     needs: config
-    uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@feature/GHA-0002-initial-release-build-lam
+    uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@main
     with:
       function_base_name: ${{ inputs.function_base_name || 'test-lambda' }}
       s3_bucket_name: ${{ needs.config.outputs.s3_bucket_name }}
