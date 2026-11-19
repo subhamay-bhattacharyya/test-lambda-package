@@ -12,13 +12,8 @@ on:
       environment:
         description: "GitHub environment to deploy into"
         required: true
-        type: choice
+        type: environment
         default: devl
-        options:
-          - ci
-          - devl
-          - test
-          - prod
 
 permissions:
   contents: read
