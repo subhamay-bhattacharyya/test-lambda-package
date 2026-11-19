@@ -31,7 +31,7 @@ def handler(event, context):
     Returns:
         A dict. Shape depends on the trigger; this returns a generic result.
     """
-    logger.info("Received event: %s", json.dumps(event, default=str))
+    logger.info("Received event", extra={"event": event})
 
     try:
         # ---- Your business logic goes here ----
