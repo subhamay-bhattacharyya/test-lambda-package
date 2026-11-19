@@ -17,6 +17,7 @@ on:
     paths:
       - 'cloudformation/**'
       - 'lambda/image-labels-processor/**'
+      - .github/workflows/ci.yaml
 
 permissions:
   actions: write
