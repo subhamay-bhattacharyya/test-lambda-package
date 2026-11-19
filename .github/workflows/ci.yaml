@@ -12,6 +12,11 @@ on:
       - 'cloudformation/**'
       - 'lambda/image-labels-processor/**'
       - .github/workflows/ci.yaml
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloudformation/**'
+      - 'lambda/image-labels-processor/**'
 
 permissions:
   actions: write
