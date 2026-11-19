@@ -3,22 +3,22 @@ description: CI Build Workflow for CloudFormation VPC Subnet Stack run by {{ git
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - feature/**
-      - bug/**
-      - fix/**
-    paths:
-      - 'cloudformation/**'
-      - 'lambda/image-labels-processor/**'
-      - .github/workflows/ci.yaml
-  pull_request:
-    branches: [main]
-    paths:
-      - 'cloudformation/**'
-      - 'lambda/image-labels-processor/**'
-      - .github/workflows/ci.yaml
+  # push:
+  #   branches:
+  #     - main
+  #     - feature/**
+  #     - bug/**
+  #     - fix/**
+  #   paths:
+  #     - 'cloudformation/**'
+  #     - 'lambda/image-labels-processor/**'
+  #     - .github/workflows/ci.yaml
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'cloudformation/**'
+  #     - 'lambda/image-labels-processor/**'
+  #     - .github/workflows/ci.yaml
 
 permissions:
   actions: write

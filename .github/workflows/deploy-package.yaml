@@ -30,7 +30,7 @@ jobs:
       - name: Read variables from environment
         id: read
         env:
-          FUNCTION_BASE_NAME: proj-ztc-image-labels-processor
+          FUNCTION_BASE_NAME: gen-ai-equip-sme-assistant
           AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
           AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
@@ -45,7 +45,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   deploy:
-    name: Build and deploy test-lambda
+    name: Build and deploy gen-ai-equip-sme-assistant
     needs: config
     uses: subhamay-bhattacharyya-gha/lambda-build-deploy-reusable-wf/.github/workflows/build-deploy-lambda.yaml@main
     with:
@@ -55,7 +55,7 @@ jobs:
       aws_account_id: ${{ needs.config.outputs.aws_account_id }}
       aws_oidc_role_name: ${{ needs.config.outputs.aws_oidc_role_name }}
       python_version: ${{ needs.config.outputs.python_version }}
-      functions_root: lambda/image-labels-processor
+      functions_root: lambda/equip-sme-assistant
       environment: ${{ inputs.environment }}
       runner: ubuntu-26.04
 
